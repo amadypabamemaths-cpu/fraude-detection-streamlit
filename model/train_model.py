@@ -10,24 +10,31 @@ import joblib
 os.makedirs("model", exist_ok=True)
 
 # 1. Chargement des données
-# (Adapté au chemin et séparateur de votre notebook)
 df = pd.read_csv("data/transactions.csv", sep=";", on_bad_lines="skip")
-#df = pd.read_csv("data/transactions.csv")
 
 # --- Prétraitement des données ---
 # Création de la variable cible binaire : 1 si fraude ou suspect, 0 si normal
 df['Class'] = df['Target'].apply(lambda x: 1 if x in ['Fraude', 'Suspect'] else 0)
 
-# Suppression des colonnes non pertinentes pour l'apprentissage
-df_model = df.drop(columns=['ID Clients', 'Numero de compte', 'Identifiant operation', 'Date', 'Target'])
+# Extraction de l'heure à partir de la colonne Date
+df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
+df['Heure'] = df['Date'].dt.hour.fillna(0).astype(int)
 
-# Encodage des variables catégorielles (One-Hot Encoding)
-df_encoded = pd.get_dummies(df_model, columns=['Type de transaction', 'Status operation', 'Localisation'], drop_first=True)
-# ---------------------------------
+# Sélection des 3 variables utilisées dans votre interface Streamlit : Montant, Heure, Localisation
+# (Remplacez 'Montant' par le nom exact de la colonne si elle s'appelle différemment, ex: 'Montant de la transaction')
+features_cols = ['Montant', 'Heure', 'Localisation']
+df_model = df[features_cols].copy()
+df_model['Class'] = df['Class']
+
+# Encodage de la variable catégorielle 'Localisation'
+df_encoded = pd.get_dummies(df_model, columns=['Localisation'], drop_first=True)
 
 # 2. Séparation features / cible
 X = df_encoded.drop("Class", axis=1)
 y = df_encoded["Class"]
+
+# Sauvegarde des colonnes utilisées
+joblib.dump(list(X.columns), "model/model_columns.pkl")
 
 # 3. Normalisation
 scaler = StandardScaler()
@@ -49,7 +56,7 @@ y_pred = model.predict(X_test)
 print("--- Rapport de Classification ---")
 print(classification_report(y_test, y_pred))
 
-# 7. Sauvegarde du modèle ET du scaler
+# 7. Sauvegarde du modèle et du scaler
 joblib.dump(model, "model/fraud_model.pkl")
 joblib.dump(scaler, "model/scaler.pkl")
 print("Modèle et outils de prétraitement sauvegardés avec succès dans le dossier 'model/'.")
