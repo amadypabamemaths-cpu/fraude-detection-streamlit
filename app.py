@@ -85,6 +85,7 @@ with tab1:
             st.success(f"✅ **Transaction Légitime.** (Probabilité de fraude : {proba[0]:.2%})")
 
 # --- ONGLET 2 : FICHIER CSV ---
+# --- ONGLET 2 : FICHIER CSV ---
 with tab2:
     st.subheader("Analyse d'un fichier de transactions (CSV)")
     uploaded_file = st.file_uploader("Choisissez un fichier CSV", type=["csv"])
@@ -111,5 +112,19 @@ with tab2:
                 fraudes_detectees = sum(preds)
                 st.warning(f"🔍 **Nombre total de transactions suspectes détectées :** {fraudes_detectees} sur {len(file_df)}")
                 
+                # =========================================================
+                # 🔽 AJOUTEZ LE BOUTON DE TÉLÉCHARGEMENT À PARTIR D'ICI 🔽
+                # =========================================================
+                st.markdown("---")
+                csv_export = results_df.to_csv(index=False).encode('utf-8')
+                
+                st.download_button(
+                    label="📥 Télécharger le rapport d'analyse (CSV)",
+                    data=csv_export,
+                    file_name="rapport_detection_fraude.csv",
+                    mime="text/csv"
+                )
+                # =========================================================
+
         except Exception as e:
             st.error(f"Erreur lors du traitement du fichier : {e}")
