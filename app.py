@@ -13,6 +13,46 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Injection CSS personnalisée
+st.markdown("""
+    <style>
+    /* Style général du fond */
+    .stApp {
+        background-color: #0F172A;
+    }
+    
+    /* Cartes de métriques personnalisées */
+    [data-testid="stMetricValue"] {
+        font-size: 1.8rem !important;
+        font-weight: 700;
+        color: #60A5FA;
+    }
+    
+    /* Boutons personnalisés avec effet survol */
+    .stButton>button {
+        border-radius: 10px;
+        background: linear-gradient(135deg, #2563EB, #1D4ED8);
+        color: white;
+        border: none;
+        font-weight: 600;
+        padding: 0.5rem 1.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .stButton>button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+    }
+    
+    /* Arrondir les conteneurs et DataFrames */
+    .stDataFrame, .stPlotlyChart {
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid #334155;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 # Chargement du jeu de données
 @st.cache_data
 def load_data():
@@ -64,6 +104,9 @@ st.sidebar.markdown("**Application développée par :** Amady")
 # ==============================================================================
 # PAGE 1 : ACCUEIL
 # ==============================================================================
+# ==============================================================================
+# PAGE 1 : ACCUEIL
+# ==============================================================================
 if page == "🏠 Accueil":
     st.title("🏛️ Détection de la fraude bancaire")
     st.write(
@@ -72,28 +115,30 @@ if page == "🏠 Accueil":
     )
 
     st.markdown("---")
+
+    # 🔽 DEBUT DU BLOC CONTENEUR (CARTE D'INFORMATION) 🔽
+    with st.container(border=True):
+        st.subheader("📊 Résumé Exécutif & Métriques Clés")
+        
+        # Calcul des métriques
+        total_trans = len(df_raw)
+        nb_fraudes = len(df_raw[df_raw['Target'].isin(['Fraude', 'Suspect', 1])]) if 'Target' in df_raw.columns else 0
+        taux_fraude = (nb_fraudes / total_trans) * 100 if total_trans > 0 else 0
+
+        col1, col2, col3, col4 = st.columns(4)
+        col1.metric("Transactions Analysées", f"{total_trans:,}")
+        col2.metric("Fraudes / Suspects", f"{nb_fraudes:,}")
+        col3.metric("Taux de Fraude Global", f"{taux_fraude:.1f} %")
+        col4.metric("Modèle Principal", "XGBoost")
+    # 🔼 FIN DU BLOC CONTENEUR 🔼
+
+    st.markdown("---")
     st.markdown("### La variable cible `Target` comporte 3 classes :")
     st.markdown("""
     * 🟢 **Normal** : transaction normale
     * 🟡 **Suspect** : transaction suspecte, à surveiller
     * 🔴 **Fraude** : transaction frauduleuse confirmée
     """)
-
-    st.markdown("---")
-    
-    # Calcul des métriques d'accueil
-    total_trans = len(df_raw)
-    nb_fraudes = len(df_raw[df_raw['Target'].isin(['Fraude', 'Suspect', 1])]) if 'Target' in df_raw.columns else 0
-    taux_fraude = (nb_fraudes / total_trans) * 100 if total_trans > 0 else 0
-
-    col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Transactions", f"{total_trans:,}")
-    col2.metric("Fraudes recensées", f"{nb_fraudes:,}")
-    col3.metric("Taux de fraude", f"{taux_fraude:.1f} %")
-    col4.metric("Modèle retenu", "XGBoost")
-
-    st.info("Sélectionné automatiquement parmi plusieurs modèles comparés (rappel Fraude = 92.5%), puis optimisé par GridSearchCV.")
-
 # ==============================================================================
 # PAGE 2 : EXPLORATION DES DONNÉES
 # ==============================================================================
